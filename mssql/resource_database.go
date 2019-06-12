@@ -57,7 +57,9 @@ func resourceDatabaseRead(d *schema.ResourceData, m interface{}) error {
 	db := m.(*sql.DB)
 	name := d.Id()
 	row, err := checkTable(db, name)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil
+	}else if err != nil {
 		return err
 	}
 

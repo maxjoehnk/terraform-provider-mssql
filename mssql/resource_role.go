@@ -38,11 +38,29 @@ func resourceRoleCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId(name)
+	row := db.QueryRow(fmt.Sprintf("SELECT principal_id FROM master.sys.server_principals WHERE name = '%s'", name))
+	var id int
+	if err = row.Scan(&id); err != nil {
+		return err
+	}
+
+	d.SetId(fmt.Sprint(id))
 	return err
 }
 
 func resourceRoleRead(d *schema.ResourceData, m interface{}) error {
+	db := m.(*sql.DB)
+	row := db.QueryRow(fmt.Sprintf("SELECT name FROM master.sys.server_principals WHERE principal_id = %s", d.Id()))
+	var name string
+	err := row.Scan(&name)
+	if err == sql.ErrNoRows {
+		return nil
+	}else if err != nil {
+		return err
+	}
+	if err := d.Set("name", name); err != nil {
+		return err
+	}
 	return nil
 }
 
