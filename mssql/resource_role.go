@@ -55,7 +55,7 @@ func resourceRoleRead(d *schema.ResourceData, m interface{}) error {
 	err := row.Scan(&name)
 	if err == sql.ErrNoRows {
 		return nil
-	}else if err != nil {
+	} else if err != nil {
 		return err
 	}
 	if err := d.Set("name", name); err != nil {
@@ -70,8 +70,15 @@ func resourceRoleUpdate(d *schema.ResourceData, m interface{}) error {
 
 func resourceRoleDelete(d *schema.ResourceData, m interface{}) error {
 	db := m.(*sql.DB)
-	name := d.Id()
-	_, err := db.Query(fmt.Sprintf("DROP USER %s", name))
+	row := db.QueryRow(fmt.Sprintf("SELECT name FROM master.sys.server_principals WHERE principal_id = %s", d.Id()))
+	var name string
+	err := row.Scan(&name)
+	if err != nil {
+		return err
+	}
+	dropUserQuery := fmt.Sprintf("DROP USER %s", name)
+	print(dropUserQuery)
+	_, err = db.Query(dropUserQuery)
 	if err != nil {
 		return err
 	}
