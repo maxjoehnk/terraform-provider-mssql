@@ -3,13 +3,12 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
-	"net/url"
 	_ "github.com/denisenkom/go-mssqldb"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"net/url"
 )
 
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"username": {
@@ -21,22 +20,21 @@ func Provider() terraform.ResourceProvider {
 				Required: true,
 			},
 			"host": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Required: true,
 			},
 			"port": {
-				Type: schema.TypeInt,
-				Default: 1433,
+				Type:     schema.TypeInt,
+				Default:  1433,
 				Optional: true,
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"mssql_database": resourceDatabase(),
-			"mssql_role": resourceRole(),
+			"mssql_role":     resourceRole(),
 		},
-		DataSourcesMap: map[string]*schema.Resource{
-		},
-		ConfigureFunc: providerConfigure,
+		DataSourcesMap: map[string]*schema.Resource{},
+		ConfigureFunc:  providerConfigure,
 	}
 }
 

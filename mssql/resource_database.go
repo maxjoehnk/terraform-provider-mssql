@@ -3,7 +3,7 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDatabase() *schema.Resource {
@@ -59,7 +59,7 @@ func resourceDatabaseRead(d *schema.ResourceData, m interface{}) error {
 	row, err := checkTable(db, name)
 	if err == sql.ErrNoRows {
 		return nil
-	}else if err != nil {
+	} else if err != nil {
 		return err
 	}
 
