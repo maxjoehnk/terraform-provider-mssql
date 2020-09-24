@@ -1,11 +1,11 @@
 package mssql
 
 import (
-	"database/sql"
-	"fmt"
+	"context"
 	_ "github.com/denisenkom/go-mssqldb"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/url"
+	"github.com/maxjoehnk/terraform-provider-mssql/mssql/connector"
 )
 
 func Provider() *schema.Provider {
@@ -33,19 +33,16 @@ func Provider() *schema.Provider {
 			"mssql_database": resourceDatabase(),
 			"mssql_role":     resourceRole(),
 		},
-		DataSourcesMap: map[string]*schema.Resource{},
-		ConfigureFunc:  providerConfigure,
+		DataSourcesMap:       map[string]*schema.Resource{},
+		ConfigureContextFunc: providerConfigure,
 	}
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	username := d.Get("username").(string)
+func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	host := d.Get("host").(string)
+	port := d.Get("port").(int)
+	user := d.Get("username").(string)
 	password := d.Get("password").(string)
-	u := &url.URL{
-		Scheme: "sqlserver",
-		User:   url.UserPassword(username, password),
-		Host:   fmt.Sprintf("%s:%d", d.Get("host"), d.Get("port")),
-	}
 
-	return sql.Open("sqlserver", u.String())
+	return connector.New(host, port, user, password), nil
 }

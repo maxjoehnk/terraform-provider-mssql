@@ -1,17 +1,18 @@
 package mssql
 
 import (
-	"database/sql"
-	"fmt"
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/maxjoehnk/terraform-provider-mssql/mssql/connector"
 )
 
 func resourceDatabase() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDatabaseCreate,
-		Read:   resourceDatabaseRead,
-		Update: resourceDatabaseUpdate,
-		Delete: resourceDatabaseDelete,
+		CreateContext: resourceDatabaseCreate,
+		ReadContext:   resourceDatabaseRead,
+		UpdateContext: resourceDatabaseUpdate,
+		DeleteContext: resourceDatabaseDelete,
 
 		Schema: map[string]*schema.Schema{
 			"owner": {
@@ -26,66 +27,45 @@ func resourceDatabase() *schema.Resource {
 	}
 }
 
-func resourceDatabaseCreate(d *schema.ResourceData, m interface{}) error {
-	db := m.(*sql.DB)
+func resourceDatabaseCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	db := m.(connector.MssqlConnector)
 	name := d.Get("name").(string)
-	_, err := db.Query(fmt.Sprintf("CREATE DATABASE %s", name))
-	if err != nil {
-		return err
+	if err := db.CreateDatabase(ctx, name); err != nil {
+		return diag.FromErr(err)
 	}
-	row, err := checkTable(db, name)
-	if err != nil {
-		return err
-	}
-	d.SetId(row.name)
-	if d.Get("owner") != nil {
-		owner := d.Get("owner").(string)
-		_, err := db.Query(fmt.Sprintf("ALTER AUTHORIZATION ON DATABASE::%s TO %s", name, owner))
-		if err != nil {
-			return err
+	d.SetId(name)
+
+	owner := d.Get("owner")
+	if owner != nil {
+		if err := db.SetDatabaseOwner(ctx, name, owner.(string)); err != nil {
+			return diag.FromErr(err)
 		}
 	}
-
-	return err
 }
 
-type DatabaseSchemaRow struct {
-	name string
-}
-
-func resourceDatabaseRead(d *schema.ResourceData, m interface{}) error {
-	db := m.(*sql.DB)
+func resourceDatabaseRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	db := m.(connector.MssqlConnector)
 	name := d.Id()
-	row, err := checkTable(db, name)
-	if err == sql.ErrNoRows {
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	if err = d.Set("name", row.name); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func checkTable(db *sql.DB, name string) (*DatabaseSchemaRow, error) {
-	var row DatabaseSchemaRow
-	err := db.QueryRow(fmt.Sprintf("SELECT name FROM sys.databases where name = '%s'", name)).Scan(&row.name)
+	hasTable, err := db.HasDatabase(ctx, name)
 	if err != nil {
-		return nil, err
+		return diag.FromErr(err)
 	}
-	return &row, nil
+	if !hasTable {
+		return nil
+	}
+	if err = d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
 }
 
-func resourceDatabaseUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return nil
 }
 
-func resourceDatabaseDelete(d *schema.ResourceData, m interface{}) error {
-	db := m.(*sql.DB)
+func resourceDatabaseDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	db := m.(connector.MssqlConnector)
 	name := d.Id()
-	_, err := db.Query(fmt.Sprintf("DROP DATABASE %s", name))
-	return err
+	if err := db.DropDatabase(ctx, name); err != nil {
+		return diag.FromErr(err)
+	}
 }
