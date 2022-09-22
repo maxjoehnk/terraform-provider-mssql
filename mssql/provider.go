@@ -12,21 +12,26 @@ func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"username": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The username to authenticate against the mssql server with. Requires the dbcreator role to create new databases.",
 			},
 			"password": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
 			"host": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The address the mssql server is reachable on.",
 			},
 			"port": {
 				Type:     schema.TypeInt,
 				Default:  1433,
 				Optional: true,
+				Description: `The port the mssql server is listening on.
+
+Defaults to 1433`,
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{

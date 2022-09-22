@@ -12,15 +12,21 @@ func resourceRole() *schema.Resource {
 		Read:   resourceRoleRead,
 		Update: resourceRoleUpdate,
 		Delete: resourceRoleDelete,
+		Description: `Manage a role
+
+Updating a role is currently not supported and will drop the user.
+`,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The logon name of the role",
 			},
 			"password": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The password used by the role",
 			},
 		},
 	}

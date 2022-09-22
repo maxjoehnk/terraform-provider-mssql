@@ -12,15 +12,19 @@ func resourceDatabase() *schema.Resource {
 		Read:   resourceDatabaseRead,
 		Update: resourceDatabaseUpdate,
 		Delete: resourceDatabaseDelete,
+		Description: `Manage a Database
 
+Updating the database is currently not implemented and will drop the entire database!`,
 		Schema: map[string]*schema.Schema{
 			"owner": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The username of the owner of the database",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name of the database",
 			},
 		},
 	}
